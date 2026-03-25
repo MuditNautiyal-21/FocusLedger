@@ -1,0 +1,77 @@
+appId: com.focusledger.app
+productName: FocusLedger
+directories:
+  buildResources: resources
+  output: release
+files:
+  - dist/main/**/*
+  - dist/renderer/**/*
+  - dist/shared/**/*
+  - resources/**/*
+  - package.json
+  - "!src/**"
+  - "!scripts/**"
+  - "!node_modules/**/{test,tests,__tests__}/**"
+  - "!node_modules/**/*.{md,ts,map}"
+extraMetadata:
+  main: dist/main/index.js
+
+# Bundle the browser extension and native host script alongside the app
+extraResources:
+  - from: dist/extension
+    to: extension
+    filter:
+      - "**/*"
+  - from: scripts/native-host.js
+    to: native-host.js
+
+asar: true
+asarUnpack:
+  - "node_modules/better-sqlite3/**"
+  - "node_modules/bindings/**"
+  - "node_modules/file-uri-to-path/**"
+
+win:
+  target:
+    - nsis
+  icon: resources/icon.png
+  signingHashAlgorithms: []
+  sign: null
+  signDlls: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  # Run native host registration after install
+  include: resources/installer.nsh
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: resources/icon.png
+  category: public.app-category.productivity
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  entitlements: null
+  entitlementsInherit: null
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
+
+linux:
+  target:
+    - AppImage
+  icon: resources/icon.png
+  category: Utility

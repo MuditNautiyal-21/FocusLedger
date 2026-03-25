@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Classify Activity</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111827;
+    color: #f9fafb;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    box-shadow: 0 0 24px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease-out;
+    user-select: none;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Badge mode (minimised) ── */
+  body.badge-mode {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.badge-mode .prompt-container { display: none; }
+  body.badge-mode .badge { display: flex; }
+
+  .badge {
+    display: none;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #6366f1;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    animation: pulse 1.8s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+  }
+  .badge svg { width: 18px; height: 18px; fill: white; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.15); opacity: 0.8; }
+  }
+
+  /* ── Main prompt container ── */
+  .prompt-container {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    flex: 1;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .header .icon { font-size: 16px; }
+  .header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #a5b4fc;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Activity info ── */
+  .info { margin-bottom: 14px; }
+  .info-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .info-label {
+    color: #9ca3af;
+    min-width: 38px;
+    flex-shrink: 0;
+  }
+  .info-value {
+    color: #e5e7eb;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Question ── */
+  .question {
+    font-size: 13px;
+    font-weight: 500;
+    color: #d1d5db;
+    margin-bottom: 12px;
+  }
+
+  /* ── Classification buttons ── */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:focus { outline: 2px solid #818cf8; outline-offset: 2px; }
+
+  .btn-productive {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+  }
+  .btn-productive:hover { background: rgba(16, 185, 129, 0.25); }
+
+  .btn-neutral {
+    background: rgba(156, 163, 175, 0.12);
+    border-color: rgba(156, 163, 175, 0.3);
+    color: #d1d5db;
+  }
+  .btn-neutral:hover { background: rgba(156, 163, 175, 0.22); }
+
+  .btn-wasted {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+  }
+  .btn-wasted:hover { background: rgba(239, 68, 68, 0.22); }
+
+  /* ── Checkboxes ── */
+  .options { margin-bottom: 12px; }
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #9ca3af;
+    cursor: pointer;
+  }
+  .option-row:hover { color: #d1d5db; }
+  .option-row input[type="checkbox"] {
+    accent-color: #6366f1;
+    width: 14px; height: 14px;
+    cursor: pointer;
+  }
+
+  /* ── Category dropdown ── */
+  .category-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .category-row label { color: #9ca3af; flex-shrink: 0; }
+  .category-select {
+    flex: 1;
+    padding: 5px 8px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #e5e7eb;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+  }
+  .category-select:focus { border-color: #6366f1; }
+
+  /* ── Keyboard hint ── */
+  .hint {
+    margin-top: auto;
+    padding-top: 8px;
+    text-align: center;
+    font-size: 10px;
+    color: #6b7280;
+  }
+  .hint kbd {
+    display: inline-block;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 10px;
+    color: #9ca3af;
+  }
+</style>
+</head>
+<body>
+  <!-- Badge (minimised mode) -->
+  <div class="badge" id="badge" title="Classify activity">
+    <svg viewBox="0 0 24 24"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg>
+  </div>
+
+  <!-- Main prompt -->
+  <div class="prompt-container" id="promptContainer">
+    <div class="header">
+      <span class="icon">&#9889;</span>
+      <h2>New Activity Detected</h2>
+    </div>
+
+    <div class="info">
+      <div class="info-row">
+        <span class="info-label">App:</span>
+        <span class="info-value" id="appName">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Title:</span>
+        <span class="info-value" id="windowTitle">—</span>
+      </div>
+      <div class="info-row" id="urlRow" style="display:none">
+        <span class="info-label">URL:</span>
+        <span class="info-value" id="domainName">—</span>
+      </div>
+    </div>
+
+    <div class="question">Track this as productive?</div>
+
+    <div class="btn-row">
+      <button class="btn btn-productive" id="btnProductive" data-cls="productive">&#9989; Productive</button>
+      <button class="btn btn-neutral" id="btnNeutral" data-cls="neutral">&#9898; Neutral</button>
+      <button class="btn btn-wasted" id="btnWasted" data-cls="non-productive">&#10060; Wasted</button>
+    </div>
+
+    <div class="options">
+      <label class="option-row">
+        <input type="checkbox" id="chkRemember" />
+        <span id="rememberLabel">Remember for all of <strong id="rememberTarget">this app</strong></span>
+      </label>
+      <label class="option-row">
+        <input type="checkbox" id="chkExclude" />
+        <span>Don't track this at all</span>
+      </label>
+    </div>
+
+    <div class="category-row">
+      <label>Category:</label>
+      <select class="category-select" id="categorySelect">
+        <option value="">None</option>
+      </select>
+    </div>
+
+    <div class="hint">
+      <kbd>Y</kbd> Productive &nbsp; <kbd>N</kbd> Wasted &nbsp; <kbd>U</kbd> Neutral &nbsp; <kbd>Esc</kbd> Dismiss
+    </div>
+  </div>
+
+<script>
+  // ── Communication with main process via query params ──
+  const params = new URLSearchParams(window.location.search);
+  const activityId   = params.get('activityId') || '';
+  const appName      = params.get('appName') || 'Unknown';
+  const windowTitle  = params.get('windowTitle') || '';
+  const domain       = params.get('domain') || '';
+  const categoriesJson = params.get('categories') || '[]';
+
+  // Populate UI
+  document.getElementById('appName').textContent = appName;
+  document.getElementById('windowTitle').textContent =
+    windowTitle.length > 60 ? windowTitle.substring(0, 57) + '...' : windowTitle;
+
+  if (domain) {
+    document.getElementById('urlRow').style.display = 'flex';
+    document.getElementById('domainName').textContent = domain;
+    document.getElementById('rememberTarget').textContent = domain;
+  } else {
+    document.getElementById('rememberTarget').textContent = appName;
+  }
+
+  // Populate categories
+  try {
+    const categories = JSON.parse(decodeURIComponent(categoriesJson));
+    const sel = document.getElementById('categorySelect');
+    categories.forEach(function(cat) {
+      const opt = document.createElement('option');
+      opt.value = cat.name;
+      opt.textContent = cat.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) { /* ignore */ }
+
+  // ── Send result back to main process ──
+  function sendResult(classification, extras) {
+    const category    = document.getElementById('categorySelect').value || null;
+    const remember    = document.getElementById('chkRemember').checked;
+    const exclude     = document.getElementById('chkExclude').checked;
+
+    const result = {
+      activityId: activityId,
+      classification: exclude ? 'neutral' : classification,
+      category: exclude ? null : category,
+      shouldRemember: remember,
+      shouldExclude: exclude,
+    };
+
+    // Post message to the main process via the ipcRenderer bridge
+    // Since we don't have a preload, we use a custom protocol handler
+    // The main process reads the hash fragment when the window navigates
+    window.location.hash = '#result=' + encodeURIComponent(JSON.stringify(result));
+  }
+
+  // ── Button clicks ──
+  document.querySelectorAll('.btn[data-cls]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      sendResult(btn.dataset.cls);
+    });
+  });
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', function(e) {
+    switch (e.key.toLowerCase()) {
+      case 'y': sendResult('productive'); break;
+      case 'n': sendResult('non-productive'); break;
+      case 'u': sendResult('neutral'); break;
+      case 'escape': sendResult('neutral'); break;
+    }
+  });
+
+  // ── Badge mode (click to reopen) ──
+  document.getElementById('badge').addEventListener('click', function() {
+    document.body.classList.remove('badge-mode');
+    // Tell main to resize back
+    window.location.hash = '#expand';
+  });
+
+  // ── Auto-minimise after 10 seconds ──
+  let minimiseTimer = setTimeout(function() {
+    document.body.classList.add('badge-mode');
+    window.location.hash = '#minimise';
+  }, 10000);
+
+  // Reset timer on any interaction
+  document.addEventListener('mousemove', function() {
+    clearTimeout(minimiseTimer);
+    minimiseTimer = setTimeout(function() {
+      if (!document.body.classList.contains('badge-mode')) {
+        document.body.classList.add('badge-mode');
+        window.location.hash = '#minimise';
+      }
+    }, 10000);
+  }, { once: false });
+</script>
+</body>
+</html>

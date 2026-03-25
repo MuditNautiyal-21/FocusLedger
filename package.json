@@ -1,0 +1,53 @@
+{
+  "name": "focusledger",
+  "version": "1.0.0",
+  "description": "FocusLedger — Advanced Time & Effort Logger",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "npm run build:main && npm run copy:assets && concurrently -k \"npm:dev:main\" \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:main": "tsc -p tsconfig.main.json -w --preserveWatchOutput",
+    "dev:renderer": "vite",
+    "dev:electron": "wait-on tcp:5173 && electron .",
+    "build": "npm run build:main && npm run build:renderer && npm run build:extension",
+    "copy:assets": "node -e \"const fs=require('fs'),p=require('path');const s=p.join('src','main','classification','prompt.html'),d=p.join('dist','main','classification');fs.mkdirSync(d,{recursive:true});fs.copyFileSync(s,p.join(d,'prompt.html'));console.log('Copied prompt.html')\"",
+    "build:main": "tsc -p tsconfig.main.json && npm run copy:assets",
+    "build:renderer": "vite build",
+    "build:extension": "tsc -p tsconfig.extension.json && npm run copy:extension-assets",
+    "copy:extension-assets": "node -e \"const fs=require('fs'),p=require('path');['manifest.json','popup.html'].forEach(f=>{fs.copyFileSync(p.join('src','extension',f),p.join('dist','extension',f))});const id=p.join('dist','extension','icons');fs.mkdirSync(id,{recursive:true});fs.readdirSync(p.join('src','extension','icons')).forEach(f=>fs.copyFileSync(p.join('src','extension','icons',f),p.join(id,f)));console.log('Extension assets copied')\"",
+    "install-host": "node scripts/install-native-host.js",
+    "package": "npm run build && electron-builder",
+    "rebuild:sqlite": "node scripts/patch-node-gyp.js && electron-rebuild -f -w better-sqlite3",
+    "postinstall": "node scripts/patch-node-gyp.js && node -e \"try{require('child_process').execSync('electron-rebuild -f -w better-sqlite3',{stdio:'inherit'})}catch(e){console.log('Skipping native rebuild — install Visual Studio C++ Build Tools to compile better-sqlite3')}\""
+  },
+  "dependencies": {
+    "active-win": "^8.2.1",
+    "auto-launch": "^5.0.6",
+    "better-sqlite3": "^11.7.0",
+    "exceljs": "^4.4.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.13.2",
+    "recharts": "^3.8.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@types/auto-launch": "^5.0.5",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/chrome": "^0.1.38",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "wait-on": "^8.0.1"
+  }
+}
