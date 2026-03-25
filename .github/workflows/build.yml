@@ -6,6 +6,9 @@ on:
       - 'v*'          # Trigger on version tags like v1.0.0
   workflow_dispatch:   # Allow manual trigger from GitHub UI
 
+permissions:
+  contents: write      # Needed for creating releases
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -32,9 +35,7 @@ jobs:
         run: npm run build
 
       - name: Package Windows installer
-        run: npx electron-builder --win --config electron-builder.yml
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish never --config electron-builder.yml
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
@@ -75,9 +76,8 @@ jobs:
         run: npm run build
 
       - name: Package macOS DMG
-        run: npx electron-builder --mac --config electron-builder.yml
+        run: npx electron-builder --mac --publish never --config electron-builder.yml
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false   # Skip code signing for now
 
       - name: Upload macOS DMG
@@ -88,13 +88,11 @@ jobs:
             release/*.dmg
           retention-days: 30
 
-  # Optional: Create a GitHub Release when a version tag is pushed
+  # Create a GitHub Release when a version tag is pushed
   release:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
     steps:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -116,5 +114,3 @@ jobs:
             artifacts/macos/*.dmg
           generate_release_notes: true
           draft: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
