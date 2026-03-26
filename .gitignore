@@ -30,6 +30,4 @@ Thumbs.db
 .env.local
 
 # Temporary files
-rebuild.bat
-rebuild.ps1
-rebuild.log
+*.tmp

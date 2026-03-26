@@ -1,7 +1,9 @@
 {
   "name": "focusledger",
   "version": "1.0.0",
-  "description": "FocusLedger — Advanced Time & Effort Logger",
+  "description": "FocusLedger - Advanced Time & Effort Logger",
+  "author": "MuditNautiyal-21",
+  "license": "MIT",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "npm run build:main && npm run copy:assets && concurrently -k \"npm:dev:main\" \"npm:dev:renderer\" \"npm:dev:electron\"",
